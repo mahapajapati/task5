@@ -1,0 +1,245 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "labName": {
+      "type": "string",
+      "defaultValue": "MIP_Lab"
+    },
+    "size": {
+      "type": "string",
+      "defaultValue": "Standard_DS3_v2",
+      "allowedValues": ["Standard_B1ms", "Standard_DS1", "Standard_D2s_v3", "Standard_B4ms", "Standard_D4s_v3", "Standard_DS3_v2"]
+    },
+    "domainAdminUser": {
+      "type": "string",
+      "defaultValue": "Devops-Admin"
+    },
+    "domainAdminPassword": {
+      "type": "securestring",
+      "defaultValue": "Advance!23"
+    },
+    "abilaDevopsRepoToken": {
+      "type": "securestring",
+      "defaultValue": "9bad9f07b4f99aa9a09f124d28f491ecb8f9a157"
+    },
+    "tentacleThumbprint": {
+      "type": "securestring",
+      "defaultValue": "ACDD1F072FA2283633BC4450BAD33600ECB9D8BB"
+    },
+    "domainName": {
+      "type": "string",
+      "defaultValue": "DEVLAND.COM",
+      "allowedValues": ["DEVLAND.COM","STAGELAND.COM","SAGEHOST.CLOUD"]
+    },
+    "dnsServerIPs": {
+      "type": "string",
+      "defaultValue": "10.0.0.5"
+    },
+    "SqlServer2012Iso_Download_Link": {
+      "type": "string",
+      "defaultValue": "https://abilacommon.blob.core.windows.net/installers/en_sql_server_2012_standard_edition_with_service_pack_3_x64_dvd_7286878.iso"
+    },
+    "labTemplateUri": {
+      "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/AbilaDevOps/AbilaDevOps/develop/Infrastructure/IaaS/Azure/Templates/Abila-ARMTemplate-MIPLab.json?token=AHVbfhFXpH5xPp04mwsJQyX8PUDoUR08ks5bA0tbwA%3D%3D"
+    },
+    "baseImgTemplateUri": {
+      "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/AbilaDevOps/AbilaDevOps/develop/Infrastructure/IaaS/Azure/Templates/Abila-ARMTemplate-BaseImage.json?token=AHVbfuNoVSBxbwUBpvydx0qlix52wOgXks5bA0tYwA%3D%3D"
+    },
+    "dcTemplateUri": {
+      "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/AbilaDevOps/AbilaDevOps/develop/Infrastructure/IaaS/Azure/Templates/Abila-ARMTemplate-DomainController.json?token=AHVbfrGSdxFchPA0gVHCds7rWtv_ig5Mks5bA0tVwA%3D%3D"
+    },
+    "dbTemplateUri": {
+      "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/AbilaDevOps/AbilaDevOps/develop/Infrastructure/IaaS/Azure/Templates/Abila-ARMTemplate-DataBaseServer.json?token=AHVbfgzLfEgls3r7IEwfwTXLNGepdpnFks5bA0sewA%3D%3D"
+    },
+    "apcTemplateUri": {
+      "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/AbilaDevOps/AbilaDevOps/develop/Infrastructure/IaaS/Azure/Templates/Abila-ARMTemplate-ACPServer.json?token=AHVbfnhwbPMcmHo_GFpSN8zled_m3dcKks5bA0r-wA%3D%3D"
+    },
+    "tsTemplateUri": {
+      "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/AbilaDevOps/AbilaDevOps/develop/Infrastructure/IaaS/Azure/Templates/Abila-ARMTemplate-TerminalServer.json?token=AHVbfqZUBpDw_GANv9qj_OuKxNTzO_m1ks5bA0quwA%3D%3D"
+    },
+    "webserverTemplateUri": {
+      "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/AbilaDevOps/AbilaDevOps/develop/Infrastructure/IaaS/Azure/Templates/Abila-ARMTemplate-WebServer.json?token=AHVbfvYEpHIX-I6Gqupq8-8HGqhA2N5Gks5bA0oYwA%3D%3D"
+    }
+  },
+  "variables": {
+    "privateRepoName": "Abila-MIP-Repo",
+    "dbServerName": "AWS63-DB01",
+    "dcServerName": "AWS63-DC01",
+    "terminalServerName": "AWS63-TS01",
+    "webServerName": "AWS63-WEB01",
+    "apcServerName": "AWS63-APC01",
+    "baseCustomeImageName": "BaseBoxCustomImage"
+  },
+  "resources": [
+    {
+        "apiVersion": "2017-05-10",
+        "name": "MIPLab",
+        "type": "Microsoft.Resources/deployments",
+        "properties": {
+            "mode": "Incremental",
+            "templateLink": {
+              "uri":"[parameters('labTemplateUri')]",
+              "contentVersion":"1.0.0.0"
+           },
+           "parameters": {
+              "labName":{"value": "[parameters('labName')]"},
+              "artifactsRepoToken":{"value": "[parameters('abilaDevopsRepoToken')]"}
+            }
+         }
+    },
+    {
+      "apiVersion": "2017-05-10",
+      "name": "BaseImage",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": ["MIPLab"],
+      "properties": {
+          "mode": "Incremental",
+          "templateLink": {
+            "uri":"[parameters('baseImgTemplateUri')]",
+            "contentVersion":"1.0.0.0"
+         },
+         "parameters": {
+            "newVMName": {"value": "BaseBox"},
+            "labName":{"value": "[parameters('labName')]"},
+            "size":{"value": "Standard_DS1"},
+            "userName":{"value": "[parameters('domainAdminUser')]"},
+            "password":{"value": "[parameters('domainAdminPassword')]"}
+          }
+       }
+    },
+    {
+      "apiVersion": "2017-05-10",
+      "name": "DomainController",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": ["BaseImage"],
+      "properties": {
+          "mode": "Incremental",
+          "templateLink": {
+            "uri":"[parameters('dcTemplateUri')]",
+            "contentVersion":"1.0.0.0"
+         },
+         "parameters": {
+            "newVMName": {"value": "[variables('dcServerName')]"},
+            "labName":{"value": "[parameters('labName')]"},
+            "size":{"value": "[parameters('size')]"},
+            "userName":{"value": "[parameters('domainAdminUser')]"},
+            "password":{"value": "[parameters('domainAdminPassword')]"},
+            "Octopus_Tentacle_Configuration_Thumbprint":{"value": "[parameters('tentacleThumbprint')]"},
+            "Domain_Controller_Configuration_DomainName":{"value": "[parameters('domainName')]"},
+            "Configure_GPOs_DBInstance":{"value": "[concat(variables('dbServerName'), '\\', 'ECSQLDB1')]"},
+            "Custom_Img_Name":{"value": "[variables('baseCustomeImageName')]"},
+            "Private_Repo_Name":{"value": "[variables('privateRepoName')]"}
+          }
+       }
+    },
+    {
+      "apiVersion": "2017-05-10",
+      "name": "DBServer",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": ["DomainController"],
+      "properties": {
+          "mode": "Incremental",
+          "templateLink": {
+            "uri":"[parameters('dbTemplateUri')]",
+            "contentVersion":"1.0.0.0"
+         },
+         "parameters": {
+            "newVMName": {"value": "[variables('dbServerName')]"},
+            "labName":{"value": "[parameters('labName')]"},
+            "size":{"value": "[parameters('size')]"},
+            "userName":{"value": "[parameters('domainAdminUser')]"},
+            "password":{"value": "[parameters('domainAdminPassword')]"},
+            "Octopus_Tentacle_Configuration_Thumbprint":{"value": "[parameters('tentacleThumbprint')]"},
+            "Set_Windows_DNS_Server_DNSServers":{"value": "[parameters('dnsServerIPs')]"},
+            "Domain_Controller_Configuration_DomainName":{"value": "[parameters('domainName')]"},
+            "SqlServer2012Iso_Download_Link":{"value": "[parameters('SqlServer2012Iso_Download_Link')]"},
+            "Custom_Img_Name":{"value": "[variables('baseCustomeImageName')]"},
+            "Private_Repo_Name":{"value": "[variables('privateRepoName')]"}
+          }
+       }
+    },
+    {
+      "apiVersion": "2017-05-10",
+      "name": "APCServer",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": ["DomainController"],
+      "properties": {
+          "mode": "Incremental",
+          "templateLink": {
+            "uri":"[parameters('apcTemplateUri')]",
+            "contentVersion":"1.0.0.0"
+         },
+         "parameters": {
+            "newVMName": {"value": "[variables('apcServerName')]"},
+            "labName":{"value": "[parameters('labName')]"},
+            "size":{"value": "Standard_DS1"},
+            "userName":{"value": "[parameters('domainAdminUser')]"},
+            "password":{"value": "[parameters('domainAdminPassword')]"},
+            "Octopus_Tentacle_Configuration_Thumbprint":{"value": "[parameters('tentacleThumbprint')]"},
+            "Domain_Controller_Configuration_DomainName":{"value": "[parameters('domainName')]"},
+            "Set_Windows_DNS_Server_DNSServers":{"value": "[parameters('dnsServerIPs')]"},
+            "Custom_Img_Name":{"value": "[variables('baseCustomeImageName')]"},
+            "Private_Repo_Name":{"value": "[variables('privateRepoName')]"}
+          }
+       }
+    },
+    {
+      "apiVersion": "2017-05-10",
+      "name": "TerminalServer",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": ["DomainController"],
+      "properties": {
+          "mode": "Incremental",
+          "templateLink": {
+            "uri":"[parameters('tsTemplateUri')]",
+            "contentVersion":"1.0.0.0"
+         },
+         "parameters": {
+            "newVMName": {"value": "[variables('terminalServerName')]"},
+            "labName":{"value": "[parameters('labName')]"},
+            "size":{"value": "Standard_DS1"},
+            "userName":{"value": "[parameters('domainAdminUser')]"},
+            "password":{"value": "[parameters('domainAdminPassword')]"},
+            "Octopus_Tentacle_Configuration_Thumbprint":{"value": "[parameters('tentacleThumbprint')]"},
+            "Domain_Controller_Configuration_DomainName":{"value": "[parameters('domainName')]"},
+            "Set_Windows_DNS_Server_DNSServers":{"value": "[parameters('dnsServerIPs')]"},
+            "Custom_Img_Name":{"value": "[variables('baseCustomeImageName')]"},
+            "Private_Repo_Name":{"value": "[variables('privateRepoName')]"}
+          }
+       }
+    },
+    {
+      "apiVersion": "2017-05-10",
+      "name": "WebServer",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": ["DomainController"],
+      "properties": {
+          "mode": "Incremental",
+          "templateLink": {
+            "uri":"[parameters('webserverTemplateUri')]",
+            "contentVersion":"1.0.0.0"
+         },
+         "parameters": {
+            "newVMName": {"value": "[variables('webServerName')]"},
+            "labName":{"value": "[parameters('labName')]"},
+            "size":{"value": "Standard_DS1"},
+            "userName":{"value": "[parameters('domainAdminUser')]"},
+            "password":{"value": "[parameters('domainAdminPassword')]"},
+            "Octopus_Tentacle_Configuration_Thumbprint":{"value": "[parameters('tentacleThumbprint')]"},
+            "Domain_Controller_Configuration_DomainName":{"value": "[parameters('domainName')]"},
+            "Set_Windows_DNS_Server_DNSServers":{"value": "[parameters('dnsServerIPs')]"},
+            "Custom_Img_Name":{"value": "[variables('baseCustomeImageName')]"},
+            "Private_Repo_Name":{"value": "[variables('privateRepoName')]"}
+          }
+       }
+    }
+  ]
+}

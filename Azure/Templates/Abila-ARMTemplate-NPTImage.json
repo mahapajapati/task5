@@ -1,0 +1,117 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "newVMName": {
+      "type": "string",
+      "defaultValue": "BaseBox"
+    },
+    "labName": {
+      "type": "string",
+      "defaultValue": "MIP_Lab"
+    },
+    "size": {
+      "type": "string",
+      "defaultValue": "Standard_DS1",
+      "allowedValues": ["Standard_B1ms", "Standard_DS1", "Standard_D2s_v3", "Standard_B4ms", "Standard_D4s_v3", "Standard_DS3_v2"]
+    },
+    "userName": {
+      "type": "string",
+      "defaultValue": "Devops-Admin"
+    },
+    "password": {
+      "type": "securestring",
+      "defaultValue": "Advance!23"
+    },
+    "Private_Repo_Name": {
+      "type": "string",
+      "defaultValue": "Abila-MIP-Repo"
+    },
+    "Octopus_Tentacle_Configuration_Thumbprint": {
+      "type": "securestring",
+      "defaultValue": "ACDD1F072FA2283633BC4450BAD33600ECB9D8BB"
+    }
+  },
+  "variables": {
+    "labSubnetName": "[concat(variables('labVirtualNetworkName'), 'Subnet')]",
+    "labVirtualNetworkId": "[resourceId('Microsoft.DevTestLab/labs/virtualnetworks', parameters('labName'), variables('labVirtualNetworkName'))]",
+    "labVirtualNetworkName": "[concat('Dtl', parameters('labName'))]",
+    "vmId": "[resourceId('Microsoft.DevTestLab/labs/virtualmachines', parameters('labName'), parameters('newVMName'))]",
+    "vmName": "[concat(parameters('labName'), '/', parameters('newVMName'))]"
+  },
+  "resources": [
+    {
+      "apiVersion": "2017-04-26-preview",
+      "type": "Microsoft.DevTestLab/labs/virtualmachines",
+      "name": "[variables('vmName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "labVirtualNetworkId": "[variables('labVirtualNetworkId')]",
+        "notes": "smalldisk Windows Server 2012 R2 Datacenter",
+        "galleryImageReference": {
+          "offer": "SQL2012SP4-WS2012R2",
+          "publisher": "MicrosoftSQLServer",
+          "sku": "Standard",
+          "osType": "Windows",
+          "version": "latest"
+        },
+        "size": "[parameters('size')]",
+        "userName": "[parameters('userName')]",
+        "password": "[parameters('password')]",
+        "isAuthenticationWithSshKey": false,
+        "artifacts": [
+          {
+            "artifactId": "[resourceId('Microsoft.DevTestLab/labs/artifactSources/artifacts', parameters('labName'), 'public repo', 'windows-git')]"
+          },
+          {
+            "artifactId": "[resourceId('Microsoft.DevTestLab/labs/artifactSources/artifacts', parameters('labName'), 'public repo', 'windows-chocolatey')]",
+            "parameters": [
+              {
+                "name": "packages",
+                "value": "powershell"
+              }
+            ]
+          },
+          {
+            "artifactId": "[resourceId('Microsoft.DevTestLab/labs/artifactSources/artifacts', parameters('labName'), 'public repo', 'windows-azurepowershell')]"
+          },
+          {
+            "artifactId": "[resourceId('Microsoft.DevTestLab/labs/artifactSources/artifacts', parameters('labName'), 'public repo', 'windows-restart')]"
+          },
+          {
+            "artifactId": "[resourceId('Microsoft.DevTestLab/labs/artifactSources/artifacts', parameters('labName'), parameters('Private_Repo_Name'), 'clone-abiladevops-repo')]"
+          },
+          {
+            "artifactId": "[resourceId('Microsoft.DevTestLab/labs/artifactSources/artifacts', parameters('labName'), parameters('Private_Repo_Name'), 'dsc-tentacle')]",
+            "parameters": [
+              {
+                "name": "Thumbprint",
+                "value": "[parameters('Octopus_Tentacle_Configuration_Thumbprint')]"
+              }
+            ]
+          }
+        ],
+        "labSubnetName": "[variables('labSubnetName')]",
+        "disallowPublicIpAddress": true,
+        "storageType": "Premium",
+        "allowClaim": false,
+        "networkInterface": {
+          "sharedPublicIpAddressConfiguration": {
+            "inboundNatRules": [
+              {
+                "transportProtocol": "tcp",
+                "backendPort": 3389
+              }
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "labVMId": {
+      "type": "string",
+      "value": "[variables('vmId')]"
+    }
+  }
+}

@@ -1,0 +1,41 @@
+select disk 2
+clean
+convert gpt
+create partition primary
+format quick fs=ntfs label="0659-QUORUM"
+assign letter="I"
+
+select disk 3
+clean
+convert gpt
+create partition primary
+format quick fs=ntfs label="3F2D-ECSQLDATA"
+assign letter="K"
+
+select disk 4
+clean
+convert gpt
+create partition primary
+format quick fs=ntfs label="334F-ECFILESHARE"
+assign letter="L"
+
+select disk 5
+clean
+convert gpt
+create partition primary
+format quick fs=ntfs label="0899-ECSQLLOG"
+assign letter="M"
+
+select disk 6
+clean
+convert gpt
+create partition primary
+format quick fs=ntfs label="3F07-ECBACKUPS"
+assign letter="O"
+
+select disk 7
+clean
+convert gpt
+create partition primary
+format quick fs=ntfs label="2DB5-FS1PROFILES"
+assign letter="U"

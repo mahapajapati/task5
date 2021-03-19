@@ -1,0 +1,324 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "newVMName": {
+      "type": "string",
+      "defaultValue": "AWS63-DB01"
+    },
+    "labName": {
+      "type": "string",
+      "defaultValue": "MIP_Lab"
+    },
+    "size": {
+      "type": "string",
+      "defaultValue": "Standard_DS3_v2",
+      "allowedValues": ["Standard_B1ms", "Standard_DS1", "Standard_D2s_v3", "Standard_B4ms", "Standard_D4s_v3", "Standard_DS3_v2"]
+    },
+    "userName": {
+      "type": "string",
+      "defaultValue": "Devops-Admin"
+    },
+    "password": {
+      "type": "securestring",
+      "defaultValue": "Advance!23"
+    },
+    "Octopus_Tentacle_Configuration_Thumbprint": {
+      "type": "securestring",
+      "defaultValue": "ACDD1F072FA2283633BC4450BAD33600ECB9D8BB"
+    },
+    "Set_Windows_DNS_Server_DNSServers": {
+      "type": "string",
+      "defaultValue": "10.0.0.4"
+    },
+    "Domain_Controller_Configuration_DomainName": {
+      "type": "string",
+      "defaultValue": "DEVLAND.COM",
+      "allowedValues": ["DEVLAND.COM","STAGELAND.COM","SAGEHOST.CLOUD"]
+    },
+    "SqlServer2012Iso_Download_Link": {
+      "type": "string",
+      "defaultValue": "https://abilacommon.blob.core.windows.net/installers/en_sql_server_2012_standard_edition_with_service_pack_3_x64_dvd_7286878.iso"
+    },
+    "Private_Repo_Name": {
+      "type": "string",
+      "defaultValue": "Abila-MIP-Repo"
+    },
+    "Custom_Img_Name":{
+      "type": "string",
+      "defaultValue": "BaseBoxCustomImage"
+    }
+  },
+  "variables": {
+    "labSubnetName": "[concat(variables('labVirtualNetworkName'), 'Subnet')]",
+    "labVirtualNetworkId": "[resourceId('Microsoft.DevTestLab/labs/virtualnetworks', parameters('labName'), variables('labVirtualNetworkName'))]",
+    "labVirtualNetworkName": "[concat('Dtl', parameters('labName'))]",
+    "vmId": "[resourceId('Microsoft.DevTestLab/labs/virtualmachines', parameters('labName'), parameters('newVMName'))]",
+    "vmName": "[concat(parameters('labName'), '/', parameters('newVMName'))]"
+  },
+  "resources": [
+    {
+      "apiVersion": "2017-04-26-preview",
+      "type": "Microsoft.DevTestLab/labs/virtualmachines",
+      "name": "[variables('vmName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "labVirtualNetworkId": "[variables('labVirtualNetworkId')]",
+        "notes": "SQL Server 2012 SP4 Enterprise on Windows Server 2012 R2",
+        "customImageId": "[resourceId('Microsoft.DevTestLab/labs/customimages', parameters('labName'), parameters('Custom_Img_Name'))]",
+        "size": "[parameters('size')]",
+        "userName": "[parameters('userName')]",
+        "password": "[parameters('password')]",
+        "isAuthenticationWithSshKey": false,
+        "artifacts": [
+          {
+            "artifactId": "[resourceId('Microsoft.DevTestLab/labs/artifactSources/artifacts', parameters('labName'), parameters('Private_Repo_Name'), 'clone-abiladevops-repo')]"
+          },
+          {
+            "artifactId": "[resourceId('Microsoft.DevTestLab/labs/artifactSources/artifacts', parameters('labName'), parameters('Private_Repo_Name'), 'dsc-tentacle')]",
+            "parameters": [
+              {
+                "name": "Thumbprint",
+                "value": "[parameters('Octopus_Tentacle_Configuration_Thumbprint')]"
+              }
+            ]
+          },
+          {
+            "artifactId": "[resourceId('Microsoft.DevTestLab/labs/artifactSources/artifacts', parameters('labName'), parameters('Private_Repo_Name'), 'set-dns-servers')]",
+            "parameters": [
+              {
+                "name": "DNSServers",
+                "value": "[parameters('Set_Windows_DNS_Server_DNSServers')]"
+              }
+            ]
+          },
+          {
+            "artifactId": "[resourceId('Microsoft.DevTestLab/labs/artifactSources/artifacts', parameters('labName'), parameters('Private_Repo_Name'), 'dsc-1-database-config')]",
+            "parameters": [
+              {
+                "name": "DomainName",
+                "value": "[parameters('Domain_Controller_Configuration_DomainName')]"
+              }
+            ]
+          },
+          {
+            "artifactId": "[resourceId('Microsoft.DevTestLab/labs/artifactSources/artifacts', parameters('labName'), parameters('Private_Repo_Name'), 'dsc-2-database-config')]",
+            "parameters": [
+              {
+                "name": "DomainName",
+                "value": "[parameters('Domain_Controller_Configuration_DomainName')]"
+              }
+            ]
+          },
+          {
+            "artifactId": "[resourceId('Microsoft.DevTestLab/labs/artifactSources/artifacts', parameters('labName'), parameters('Private_Repo_Name'), 'dsc-3-database-config')]",
+            "parameters": [
+              {
+                "name": "DomainName",
+                "value": "[parameters('Domain_Controller_Configuration_DomainName')]"
+              }
+            ]
+          },
+          {
+            "artifactId": "[resourceId('Microsoft.DevTestLab/labs/artifactSources/artifacts', parameters('labName'), parameters('Private_Repo_Name'), 'dsc-install-SQLServer')]",
+            "parameters": [
+              {
+                "name": "DownloadLink",
+                "value": "[parameters('SqlServer2012Iso_Download_Link')]"
+              },
+              {
+                "name": "DomainName",
+                "value": "[parameters('Domain_Controller_Configuration_DomainName')]"
+              }
+            ]
+          }
+        ],
+        "labSubnetName": "[variables('labSubnetName')]",
+        "disallowPublicIpAddress": false,
+        "storageType": "Premium",
+        "allowClaim": false
+      }
+    },
+    {
+      "apiVersion": "2017-04-26-preview",
+      "name": "[parameters('labName')]",
+      "type": "Microsoft.DevTestLab/labs",
+      "location": "[resourceGroup().location]",
+      "tags": {
+          "Name": "[parameters('labName')]"
+      },
+      "properties": {
+      },
+      "resources": [
+        {
+          "name": "3a5fa3a1-ee61-4431-907f-f06ba3162720",
+          "type": "users",
+          "apiVersion": "2017-04-26-preview",
+          "location": "[resourceGroup().location]",
+          "dependsOn": [
+            "[parameters('labName')]"
+          ],
+          "properties": {
+          },
+          "resources": [
+            {
+              "type": "disks",
+              "name": "0659-QUORUM",
+              "apiVersion": "2017-04-26-preview",
+              "location": "[resourceGroup().location]",
+              "dependsOn": [
+                "3a5fa3a1-ee61-4431-907f-f06ba3162720",
+                "[parameters('newVMName')]"
+              ],
+              "properties": {
+                  "diskType": "Standard",
+                  "diskSizeGiB": 1,
+                  "leasedByLabVmId": "[resourceId ('Microsoft.DevTestLab/labs/virtualmachines', parameters('labName'), parameters('newVMName'))]",
+                  "hostCaching": "None"
+              }
+            },
+            {
+              "type": "disks",
+              "name": "3F2D-ECSQLDATA",
+              "apiVersion": "2017-04-26-preview",
+              "location": "[resourceGroup().location]",
+              "dependsOn": [
+                "3a5fa3a1-ee61-4431-907f-f06ba3162720",
+                "[parameters('newVMName')]",
+                "0659-QUORUM"
+              ],
+              "properties": {
+                  "diskType": "Standard",
+                  "diskSizeGiB": 130,
+                  "leasedByLabVmId": "[resourceId ('Microsoft.DevTestLab/labs/virtualmachines', parameters('labName'), parameters('newVMName'))]",
+                  "hostCaching": "None"
+              }
+            },
+            {
+              "type": "disks",
+              "name": "334F-ECFILESHARE",
+              "apiVersion": "2017-04-26-preview",
+              "location": "[resourceGroup().location]",
+              "dependsOn": [
+                "3a5fa3a1-ee61-4431-907f-f06ba3162720",
+                "[parameters('newVMName')]",
+                "3F2D-ECSQLDATA"
+              ],
+              "properties": {
+                  "diskType": "Standard",
+                  "diskSizeGiB": 100,
+                  "leasedByLabVmId": "[resourceId ('Microsoft.DevTestLab/labs/virtualmachines', parameters('labName'), parameters('newVMName'))]",
+                  "hostCaching": "None"
+              }
+            },
+            {
+              "type": "disks",
+              "name": "0899-ECSQLLOG",
+              "apiVersion": "2017-04-26-preview",
+              "location": "[resourceGroup().location]",
+              "dependsOn": [
+                "3a5fa3a1-ee61-4431-907f-f06ba3162720",
+                "[parameters('newVMName')]",
+                "334F-ECFILESHARE"
+              ],
+              "properties": {
+                  "diskType": "Standard",
+                  "diskSizeGiB": 90,
+                  "leasedByLabVmId": "[resourceId ('Microsoft.DevTestLab/labs/virtualmachines', parameters('labName'), parameters('newVMName'))]",
+                  "hostCaching": "None"
+              }
+            },
+            {
+              "type": "disks",
+              "name": "3F07-ECBACKUPS",
+              "apiVersion": "2017-04-26-preview",
+              "location": "[resourceGroup().location]",
+              "dependsOn": [
+                "3a5fa3a1-ee61-4431-907f-f06ba3162720",
+                "[parameters('newVMName')]",
+                "0899-ECSQLLOG"
+              ],
+              "properties": {
+                  "diskType": "Standard",
+                  "diskSizeGiB": 50,
+                  "leasedByLabVmId": "[resourceId ('Microsoft.DevTestLab/labs/virtualmachines', parameters('labName'), parameters('newVMName'))]",
+                  "hostCaching": "None"
+              }
+            },
+            {
+              "type": "disks",
+              "name": "2DB5-FS1PROFILES",
+              "apiVersion": "2017-04-26-preview",
+              "location": "[resourceGroup().location]",
+              "dependsOn": [
+                "3a5fa3a1-ee61-4431-907f-f06ba3162720",
+                "[parameters('newVMName')]",
+                "3F07-ECBACKUPS"
+              ],
+              "properties": {
+                  "diskType": "Standard",
+                  "diskSizeGiB": 20,
+                  "leasedByLabVmId": "[resourceId ('Microsoft.DevTestLab/labs/virtualmachines', parameters('labName'), parameters('newVMName'))]",
+                  "hostCaching": "None"
+              }
+            }
+          ]
+        }
+      ]
+  },
+  {
+    "apiVersion": "2015-01-01",
+    "type": "Microsoft.Resources/deployments",
+    "name": "mountDisks",
+    "dependsOn": [
+        "2DB5-FS1PROFILES"
+    ],
+    "properties": {
+      "mode": "Incremental",
+      "template": {
+        "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+        "contentVersion": "1.0.0.0",
+        "resources": [
+          {
+            "apiVersion": "2017-04-26-preview",
+            "type": "Microsoft.DevTestLab/labs/virtualmachines",
+            "name": "[variables('vmName')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+              "notes": "SQL Server 2012 SP4 Enterprise on Windows Server 2012 R2",
+              "customImageId": "[resourceId('Microsoft.DevTestLab/labs/customimages', parameters('labName'), parameters('Custom_Img_Name'))]",
+              "size": "[parameters('size')]",
+              "userName": "[parameters('userName')]",
+              "password": "[parameters('password')]",
+              "artifacts": [
+                {
+                  "artifactId": "[resourceId('Microsoft.DevTestLab/labs/artifactSources/artifacts', parameters('labName'), parameters('Private_Repo_Name'), 'attach-and-configure-disks')]"
+                }
+              ],
+              "disallowPublicIpAddress": true,
+              "storageType": "Premium",
+              "allowClaim": false,
+              "networkInterface": {
+                "sharedPublicIpAddressConfiguration": {
+                  "inboundNatRules": [
+                    {
+                      "transportProtocol": "tcp",
+                      "backendPort": 3389
+                    }
+                  ]
+                }
+              }
+            }
+          } 
+        ]
+        }
+      }
+  }
+  ],
+  "outputs": {
+    "labVMId": {
+      "type": "string",
+      "value": "[variables('vmId')]"
+    }
+  }
+}

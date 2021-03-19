@@ -1,0 +1,89 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "labName": {
+            "type": "string",
+            "defaultValue": "MIP_Lab"
+        },
+        "artifactsRepoToken": {
+            "type": "securestring",
+            "defaultValue": "9bad9f07b4f99aa9a09f124d28f491ecb8f9a157"
+        }
+    },
+    "resources": [
+        {
+            "apiVersion": "2017-04-26-preview",
+            "name": "[parameters('labName')]",
+            "type": "Microsoft.DevTestLab/labs",
+            "location": "[resourceGroup().location]",
+            "tags": {
+                "Name": "MIP_Lab"
+            },
+            "properties": {
+                "labStorageType": "Premium"
+            },
+            "resources": [
+                {
+                    "apiVersion": "2017-04-26-preview",
+                    "name": "LabVmsShutdown",
+                    "location": "[resourceGroup().location]",
+                    "type": "schedules",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.DevTestLab/labs', parameters('labName'))]"
+                    ],
+                    "properties": {
+                        "status": "Enabled",
+                        "timeZoneId": "SA Western Standard Time",
+                        "dailyRecurrence": {
+                            "time": "1900"
+                        },
+                        "taskType": "LabVmsShutdownTask",
+                        "notificationSettings": {
+                            "status": "Disabled",
+                            "timeInMinutes": 30
+                        }
+                    }
+                },
+                {
+                    "apiVersion": "2017-04-26-preview",
+                    "name": "[concat('Dtl', parameters('labName'))]",
+                    "type": "virtualnetworks",
+                    "location": "[resourceGroup().location]",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.DevTestLab/labs', parameters('labName'))]"
+                    ]
+                },
+                {
+                    "name": "Abila-MIP-Repo",
+                    "type": "artifactsources",
+                    "apiVersion": "2016-05-15",
+                    "location": "[resourceGroup().location]",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.DevTestLab/labs', parameters('labName'))]"
+                    ],
+                    "properties": {
+                      "displayName": "Abila-MIP-Repo",
+                      "uri": "https://github.com/AbilaDevOps/AbilaDevOps.git",
+                      "sourceType": "GitHub",
+                      "folderPath": "/Infrastructure/IaaS/Azure/Artifacts",
+                      "armTemplateFolderPath": "/Infrastructure/IaaS/Azure/Templates",
+                      "branchRef": "develop",
+                      "securityToken": "[parameters('artifactsRepoToken')]",
+                      "status": "Enabled"
+                    }
+                }
+            ]
+        }
+    ],
+    "outputs": {
+        "labName": {
+          "type": "string",
+          "value": "[parameters('labName')]"
+        },
+        "resourceGroup": {
+          "type": "string",
+          "value": "[resourceGroup().name]"
+          }
+    }
+}

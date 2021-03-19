@@ -1,0 +1,23 @@
+{
+    "$schema": "https://raw.githubusercontent.com/Azure/azure-devtestlab/master/schemas/2016-11-28/dtlArtifacts.json",
+    "title": "Octopus Tentacle Configuration",
+    "description": "Configure the octopus tentacle to listening mode",
+    "publisher": "AbilaDevOps",
+    "tags": [
+        "PowerShell"
+    ],
+    "iconUri": "https://www.svgrepo.com/show/18541/octopus.svg",
+    "targetOsType": "Windows",
+    "parameters": {
+        "Thumbprint": {
+            "type": "string",
+            "displayName": "Thumbprint",
+            "description": "Octopus Server Thumbprint to authenticate",
+            "defaultValue": "ACDD1F072FA2283633BC4450BAD33600ECB9D8BB",
+            "allowEmpty": false
+        }
+    },
+    "runCommand": {
+        "commandToExecute": "[concat('powershell.exe -ExecutionPolicy bypass -File Start-tentacle-dsc.ps1', ' -Thumbprint ', parameters('Thumbprint'))]"
+    }
+}

@@ -1,0 +1,33 @@
+{
+    "$schema": "https://raw.githubusercontent.com/Azure/azure-devtestlab/master/schemas/2016-11-28/dtlArtifacts.json",
+    "title": "Install SQL Server from ISO",
+    "description": "Downloads, and installs SQL server 2012 from ISO using DSC",
+    "publisher": "AbilaDevOps",
+    "tags": [
+        "PowerShell"
+    ],
+    "iconUri": "https://mc.qcloudimg.com/static/img/8cc542eb2a77f5651400bdff67560e5a/SQL+Server.svg",
+    "targetOsType": "Windows",
+    "parameters": {
+        "DownloadLink": {
+            "type": "string",
+            "displayName": "SQL Server Download Link",
+            "defaultValue": "https://abilacommon.blob.core.windows.net/installers/en_sql_server_2012_standard_edition_with_service_pack_3_x64_dvd_7286878.iso"
+        },
+        "DomainName": {
+            "type": "string",
+            "displayName": "Domain Name",
+            "description": "Fully qualified domain name (FQDN) of the forest root domain",
+            "defaultValue": "DEVLAND.COM",
+            "allowedValues": ["DEVLAND.COM", "STAGELAND.COM", "SAGEHOST.CLOUD"]
+        },
+        "MountDrive": {
+            "type": "string",
+            "displayName": "Mount Drive",
+            "defaultValue": "F:"
+        }
+    },
+    "runCommand": {
+        "commandToExecute": "[concat('powershell.exe -ExecutionPolicy bypass \"& ./Install-SQLServer-dsc.ps1', ' -DownloadLink ', parameters('DownloadLink'), ' -DomainName ', parameters('DomainName'), ' -MountDrive ', parameters('MountDrive'),'\"')]"
+    }
+}
