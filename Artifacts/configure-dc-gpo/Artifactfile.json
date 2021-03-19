@@ -1,0 +1,23 @@
+{
+    "$schema": "https://raw.githubusercontent.com/Azure/azure-devtestlab/master/schemas/2016-11-28/dtlArtifacts.json",
+    "title": "Configure GPOs",
+    "description": "Configure required GPOs for domain controller",
+    "publisher": "AbilaDevOps",
+    "tags": [
+        "PowerShell"
+    ],
+    "iconUri": "https://jumpcloud.com/blog/wp-content/uploads/2017/02/DomainController_0A90CD88.jpg",
+    "targetOsType": "Windows",
+    "parameters": {
+        "DBInstance": {
+            "type": "string",
+            "displayName": "DB instance name",
+            "description": "Database instance name reachable in network",
+            "defaultValue": "AWS63-DB01",
+            "allowEmpty": false
+        }
+    },
+    "runCommand": {
+        "commandToExecute": "[concat('powershell.exe -ExecutionPolicy bypass \"& ./Configure-GPOs.ps1', ' -DBInstance ', parameters('DBInstance'), '\"')]"
+    }
+}

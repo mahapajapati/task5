@@ -1,0 +1,23 @@
+{
+    "$schema": "https://raw.githubusercontent.com/Azure/azure-devtestlab/master/schemas/2016-11-28/dtlArtifacts.json",
+    "title": "Set Windows DNS Server",
+    "description": "Use this to set the DNS Servers IPs",
+    "publisher": "AbilaDevOps",
+    "tags": [
+        "PowerShell"
+    ],
+    "iconUri": "https://lh3.googleusercontent.com/_Sr9bwoYGW-rBlIpcv4VeZQisc8CPD7mWxiKKrW0G6j-pZPqnqROXtboZegLMQbYAA=w300-rw",
+    "targetOsType": "Windows",
+    "parameters": {
+        "DNSServers": {
+            "type": "string",
+            "displayName": "DNS Servers",
+            "description": "DNS Servers separated by comma",
+            "defaultValue": "10.0.0.100",
+            "allowEmpty": false
+        }
+    },
+    "runCommand": {
+        "commandToExecute": "[concat('powershell.exe -ExecutionPolicy bypass -File Set-DNS-servers.ps1', ' -DNSServers ', parameters('DNSServers'))]"
+    }
+}

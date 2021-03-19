@@ -1,0 +1,35 @@
+{
+    "$schema": "https://raw.githubusercontent.com/Azure/azure-devtestlab/master/schemas/2016-11-28/dtlArtifacts.json",
+    "title": "WebServer Server Configuration",
+    "description": "Configure Server to be a WebServer for abila MIP environment",
+    "publisher": "AbilaDevOps",
+    "tags": [
+        "PowerShell"
+    ],
+    "iconUri": "https://media.licdn.com/dms/image/C510BAQF0q7EIxjMnNA/company-logo_200_200/0?e=2159024400&v=alpha&t=DyX8LAgneWChS_7B9A55u89wmmT1o5Jo92TdlVRQ8vo",
+    "targetOsType": "Windows",
+    "parameters": {
+        "DomainName": {
+            "type": "string",
+            "displayName": "Domain Name",
+            "description": "Fully qualified domain name (FQDN) of the forest root domain",
+            "defaultValue": "DEVLAND.COM",
+            "allowedValues": ["DEVLAND.COM", "STAGELAND.COM", "SAGEHOST.CLOUD"]
+        },
+        "DomainUserName": {
+            "type": "string",
+            "displayName": "Domain User Name",
+            "description": "Domain User Name, same name will be used to set VM local Admin user",
+            "defaultValue": "Devops-Admin"
+        },
+        "DomainUserPassword": {
+            "type": "securestring",
+            "displayName": "Domain User Password",
+            "description": "Domain User Password, same name will be used to set VM local Admin password",
+            "defaultValue": "Advance!23"
+        }
+    },
+    "runCommand": {
+        "commandToExecute": "[concat('powershell.exe -ExecutionPolicy bypass \"& ./Start-WebServer-dsc.ps1', ' -DomainName ', parameters('DomainName'), ' -DomainUserName ', parameters('DomainUserName'),' -DomainUserPassword ', parameters('DomainUserPassword'),'\"')]"
+    }
+}

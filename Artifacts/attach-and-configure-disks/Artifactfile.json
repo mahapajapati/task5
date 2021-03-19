@@ -1,0 +1,14 @@
+{
+    "$schema": "https://raw.githubusercontent.com/Azure/azure-devtestlab/master/schemas/2016-11-28/dtlArtifacts.json",
+    "title": "Attach and Configure Disks",
+    "description": "Attach and Configure Disks according abila MIP requirements",
+    "publisher": "AbilaDevOps",
+    "tags": [
+        "PowerShell"
+    ],
+    "iconUri": "https://cdn3.iconfinder.com/data/icons/3d-glossy-basic/512/database-512.png",
+    "targetOsType": "Windows",
+    "runCommand": {
+        "commandToExecute": "[concat('powershell.exe -ExecutionPolicy bypass \"& ./AttachAndConfigure-Disks.ps1', '\"')]"
+    }
+}

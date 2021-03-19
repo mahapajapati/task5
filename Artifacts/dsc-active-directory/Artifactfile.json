@@ -1,0 +1,23 @@
+{
+    "$schema": "https://raw.githubusercontent.com/Azure/azure-devtestlab/master/schemas/2016-11-28/dtlArtifacts.json",
+    "title": "Active Directory Configuration",
+    "description": "Configure Server to be an active directory with abila MIP requirements",
+    "publisher": "AbilaDevOps",
+    "tags": [
+        "PowerShell"
+    ],
+    "iconUri": "https://jumpcloud.com/blog/wp-content/uploads/2017/02/DomainController_0A90CD88.jpg",
+    "targetOsType": "Windows",
+    "parameters": {
+        "DomainName": {
+            "type": "string",
+            "displayName": "Domain Name",
+            "description": "Fully qualified domain name (FQDN) of the forest root domain",
+            "defaultValue": "DEVLAND.COM",
+            "allowedValues": ["DEVLAND.COM", "STAGELAND.COM", "SAGEHOST.CLOUD"]
+        }
+    },
+    "runCommand": {
+        "commandToExecute": "[concat('powershell.exe -ExecutionPolicy bypass \"& ./Start-ActiveDirectory-dsc.ps1', ' -DomainName ', parameters('DomainName'), '\"')]"
+    }
+}
